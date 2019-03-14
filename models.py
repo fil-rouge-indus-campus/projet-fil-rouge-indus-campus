@@ -2,7 +2,7 @@ from peewee import *
 import datetime
 import os
 import json
-mysql_db = MySQLDatabase('fil_rouge', user='phpmyadmin', password='38loza73php', host='localhost')
+mysql_db = MySQLDatabase('Fil_Rouge', user='phpmyadmin', password='PassPass.', host='localhost')
 mysql_db.connect()
 
 
@@ -42,11 +42,11 @@ class StatsPerMatch(Model):
 class StatsPerDay(Model):
     date = DateField()
     machine = ForeignKeyField(GameServers, backref='StatsPerDay')
-    nb_partie_jour = IntegerField
+    nb_partie_jour = IntegerField()
     duree_moy_partie_jour = IntegerField()
-    nb_fois_gagnant1 = IntegerField
-    nb_fois_gagnant2 = IntegerField
-    nb_fois_egalite = IntegerField
+    nb_fois_gagnant1 = IntegerField()
+    nb_fois_gagnant2 = IntegerField()
+    nb_fois_egalite = IntegerField()
 
     class Meta:
         database = mysql_db
