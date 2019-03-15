@@ -2,6 +2,7 @@ from bottle import route, run, template
 from models import GameServers
 from models import StatsPerDay
 from models import StatsPerMatch
+from models import ReceivedMessage
 
 
 @route('/gameservers')
@@ -28,6 +29,12 @@ def index_robin():
 def page_last_game():
     last_result = StatsPerMatch.select().order_by(StatsPerMatch.date_debut.desc())[0]
     return template('page_last_game', last_game=last_result)
+
+
+@route('/page_message_received')
+def message_received():
+    return template('page_message_received', message_recu=ReceivedMessage.select())
+
 
 
 
