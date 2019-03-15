@@ -1,0 +1,9 @@
+{
+    "Msg type": "STATS",
+    "Msg ID": 241,
+    "Machine name": "B",
+    "Game type" : 2,
+    "Start time": "27/02/19 09:02",
+    "End time": "27/02/19 09:03",
+    "Winner": "player2"
+}
