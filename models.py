@@ -2,7 +2,7 @@ from peewee import *
 import datetime
 import os
 import json
-mysql_db = MySQLDatabase('Fil_Rouge', user='phpmyadmin', password='PassPass.', host='localhost')
+mysql_db = MySQLDatabase('fil_rouge', user='equipeDavid', password='equipeDavid07210.', host='10.1.0.126')
 mysql_db.connect()
 
 
