@@ -18,7 +18,7 @@ def lastresult():
     return template('lastresulteuu', game=last_result)
 
 
-@route('/index')
+@route('/spm')
 def index_robin():
     return template('index_robin', name='Robin', Stats_list=StatsPerMatch.select())
 
