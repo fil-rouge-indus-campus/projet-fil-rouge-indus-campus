@@ -9,10 +9,16 @@ def index():
 
 @route('/test/<oui>/<nom>')
 def test(oui, nom):
-    return '<h1> ceci est la page aaaaaaaaaa test numéro ' + oui + ' qui appartient a ' + nom + '</h1>'
+    return '<h1> ceci est la page test numéro ' + oui + ' qui appartient a ' + nom + '</h1>'
 
 
-@route('/index')
+@route('/lastresult')
+def lastresult():
+    last_result = StatsPerMatch.select().order_by(StatsPerMatch.date_debut.desc())[0]
+    return template('lastresulteuu', game=last_result)
+
+
+@route('/spm')
 def index_robin():
     return template('index_robin', name='Robin', Stats_list=StatsPerMatch.select())
 
