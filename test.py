@@ -1,45 +1,5 @@
 from models import *
 
-# fonction pour retourner une liste de tous les serveurs connus:
-# doit retourner une liste de serveurs.
-# parametres : adress_ip, nom
-
-    # def __init__(self, nom, adress_ip):
-    #     self.nom = nom
-    #     self.adress_ip = adress_ip
-
-    # def __str__(self):
-    #     return
-# try:
-#     with mysql_db.atomic():
-#         return GameServers.create(adress_ip=adress_ip, nom=nom, jeu_installe=jeu_installe)
-# except peewee.IntegrityError:
-#     return GameServers.get(GameServers.adress_ip==adress_ip, GameServers.nom==nom, GameServers.jeu_installe==jeu_installe)
-
-
-# serv1 = GameServers.create(adress_ip='10.10.57', nom="A", jeu_installe="puissance4")
-# serv2 = GameServers.create(adress_ip='10.10.89', nom="B", jeu_installe="morpion")
-# serv1, created = GameServers.get_or_create(adress_ip='10.10.02', nom="serv1", jeu_installe="puissance4")
-# serv2, created = GameServers.get_or_create(adress_ip='10.10.03', nom="serv2", jeu_installe="morpion")
-# print(created)
-#
-#
-# mess1, created = ReceivedMessage.get_or_create(message='ff', message_ID="01", machine=serv1)
-# print(created)
-#
-#
-# my_date = datetime.datetime.strptime("26/02/19 12:22", "%d/%m/%y %H:%M")
-# messtat, created = StatsPerMatch.get_or_create(machine=serv1, date_debut=my_date, duree_jeu="30", gagnant="player1")
-# print(created)
-#
-# ma_date = datetime.datetime.strptime("26/02/19", "%d/%m/%y").date()
-# messperday, created = StatsPerDay.get_or_create(
-#     date=ma_date, machine=serv1, nb_partie_jour="2",
-#     duree_moy_partie_jour="200", nb_fois_gagnant1="2",
-#     nb_fois_gagnant2="3", nb_fois_egalite="1"
-#     )
-# print(created)
-
 
 class File_recup:
 
@@ -54,7 +14,7 @@ class File_recup:
         self.game_start = datetime.datetime.strptime(dico["Start time"], "%d/%m/%y %H:%M")
         self.game_end = datetime.datetime.strptime(dico["End time"], "%d/%m/%y %H:%M")
         self.json_formatted_string = json_formatted_string
-        self.machine = GameServers.get(GameServers.nom == dico["Machine name"]) # recupère un record simple dans table
+        self.machine = GameServers.get(GameServers.nom == dico["Machine name"])  # recupère un record simple dans table
 
     def get_winner(self):
         return self.winner
@@ -66,33 +26,58 @@ class File_recup:
         duration = self.game_end - self.game_start
         return duration.total_seconds()
 
-
-my_analyser = File_recup('{\
-                            "Msg type": "STATS",\
-                            "Msg ID": 235,\
-                            "Machine name": "A",\
-                            "Game type" : 1,\
-                            "Start time": "26/02/19 12:22",\
-                            "End time": "26/02/19 12:24",\
-                            "Winner": "player1"\
-                        }')
-print(my_analyser.get_game_duration())
-mess1, created = ReceivedMessage.get_or_create(message=my_analyser.json_formatted_string, # crée un objet de json
-                                               message_ID=my_analyser.msg_id,
-                                               machine=my_analyser.machine)
-
-messtat, created = StatsPerMatch.get_or_create(machine=my_analyser.machine, date_debut=my_analyser.day_date,
-                                               duree_jeu=my_analyser.get_game_duration(), gagnant=my_analyser.winner)
-
-messperday, created = StatsPerDay.get_or_create(
-                                                date=my_analyser.day_date, machine=my_analyser.machine,
-                                                nb_partie_jour="2",
-                                                duree_moy_partie_jour="200", nb_fois_gagnant1="2",
-                                                nb_fois_gagnant2="3", nb_fois_egalite="1"
-                                                )
+    def get_server(self):
+        return self.machine
 
 
-# StatsPerDay.get(StatsPerDay.machine==machine_A, StatsPerDay.day==date_of_game)
+path = 'game'
+dirs = os.listdir(path)
 
+for file in dirs:
+    with open('game' + '/' + file, 'r') as f:
+        messages_str = f.read()
+        my_analyser = File_recup(messages_str)
 
+        # METHODE Received Message
+        ReceivedMessage.get_or_create(message=my_analyser.json_formatted_string,  # crée un objet de json
+                                      message_ID=my_analyser.msg_id,
+                                      machine=my_analyser.machine)
 
+        # METHODE Statistiques par Partie :
+        StatsPerMatch.get_or_create(machine=my_analyser.machine, date_debut=my_analyser.day_date,
+                                    duree_jeu=my_analyser.get_game_duration(), gagnant=my_analyser.winner)
+
+        # METHODE Statistiques par Jour:
+        try:
+            obj = StatsPerDay.get(StatsPerDay.machine == my_analyser.get_server(),
+                                  StatsPerDay.date == my_analyser.get_day())
+            obj.nb_partie_jour += 1
+            obj.duree_moy_partie_jour += my_analyser.get_game_duration()
+            if my_analyser.get_winner() == 'player1':
+                obj.nb_fois_gagnant1 += 1
+            elif my_analyser.get_winner() == 'player2':
+                obj.nb_fois_gagnant2 += 1
+            else:
+                obj.nb_fois_egalite += 1
+            obj.save()
+
+        except DoesNotExist:
+            if my_analyser.get_winner() == 'player1':
+                gagnant_is_player1 = 1
+                gagnant_is_player2 = 0
+                egalite = 0
+            elif my_analyser.get_winner() == 'player2':
+                gagnant_is_player1 = 1
+                gagnant_is_player2 = 0
+                egalite = 0
+            else:
+                gagnant_is_player1 = 0
+                gagnant_is_player2 = 0
+                egalite = 1
+            StatsPerDay.create(date=my_analyser.get_day(),
+                               machine=my_analyser.get_server(),
+                               nb_partie_jour=1,
+                               duree_moy_partie_jour=my_analyser.get_game_duration(),
+                               nb_fois_gagnant1=gagnant_is_player1,
+                               nb_fois_gagnant2=gagnant_is_player2,
+                               nb_fois_egalite=egalite)
