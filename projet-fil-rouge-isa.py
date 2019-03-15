@@ -4,7 +4,7 @@ from models import GameServers
 
 @route('/gameservers')
 def gameservers():
-    return template('page_game_servers.tpl', Serveurs_info=GameServers.select())
+    return template('page_game_servers.html', Serveurs_info=GameServers.select())
 
 
 if __name__=='__main__':
